@@ -87,11 +87,12 @@ body.t-play #an,body.t-play #loadp{display:none}body.t-analysis #spawn,body.t-an
 #lg{padding:0 16px 8px;display:flex;flex-wrap:wrap}.lc{display:inline-flex;align-items:center;gap:4px;font-size:11px;margin:2px 8px 2px 0}.lc i{font:800 10px sans-serif;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;color:#fff}.lc svg{width:11px;height:11px}
 img.ti{display:block;object-fit:contain}#tg img{width:100%;height:100%;max-width:100%;max-height:100%}
 #tg span:has(img.ti),.chip:has(img.ti),.lc i:has(img.ti){background:none!important;box-shadow:none}.chip:has(img.ti){padding:0}
+#sm{padding:0 16px 8px;font-size:12px;color:var(--hi)}#sm:empty{display:none}#sm div{margin:2px 0}
 </style></head><body>
 <nav id="nav"><button data-tab="play"><i data-ic="play"></i> Play</button><button data-tab="analysis"><i data-ic="chart"></i> Analysis</button></nav>
 <div id="app">
  <div class="bw"><div class="bar" id="top"></div><div class="bd"><div class="eb"><div id="ebw"></div><span id="ebl">0.0</span></div><div class="board"><div id="sq"></div><div id="pcs"></div><svg id="ar" viewBox="0 0 800 800"></svg><div id="tg"><span></span></div></div></div><div class="bar" id="bot"></div></div>
- <div class="side"><h1><i data-ic="crown"></i> Chessreal</h1><div id="msg"></div><div id="spawn"></div><div id="loadp"><div class="tabs"><button data-lt="games" class="on">My games</button><button data-lt="paste">Paste PGN / CRM</button></div><div id="gl"></div><div id="pst" style="display:none"><textarea id="pgn" placeholder="Paste a PGN or CRM here..."></textarea><div class="row"><button class="b" data-act="load">Load</button><button class="b" data-act="export">Export CRM</button></div></div><div id="lerr"></div><div class="row"><button class="b" id="rvb" data-act="review">Review whole game</button></div><div class="row"><progress id="prog" value="0" max="1" style="display:none"></progress></div></div><div id="an"><div class="ah"><i data-ic="cpu"></i><b>Engine</b><span id="dep"></span><button class="b sm" id="engb" data-act="eng">On</button></div><div id="anb"><div class="tr"><label for="tm">Think time</label><input type="range" id="tm" min="1" max="10" value="5"><b id="tmv">5s</b></div><div id="lines"></div><div id="tgm"></div><div id="lg"></div></div></div><div id="hist"></div>
+ <div class="side"><h1><i data-ic="crown"></i> Chessreal</h1><div id="msg"></div><div id="spawn"></div><div id="loadp"><div class="tabs"><button data-lt="games" class="on">My games</button><button data-lt="paste">Paste PGN / CRM</button></div><div id="gl"></div><div id="pst" style="display:none"><textarea id="pgn" placeholder="Paste a PGN or CRM here..."></textarea><div class="row"><button class="b" data-act="load">Load</button><button class="b" data-act="export">Export CRM</button></div></div><div id="lerr"></div><div class="row"><button class="b" id="rvb" data-act="review">Review whole game</button></div><div class="row"><progress id="prog" value="0" max="1" style="display:none"></progress></div></div><div id="an"><div class="ah"><i data-ic="cpu"></i><b>Engine</b><span id="dep"></span><button class="b sm" id="engb" data-act="eng">On</button></div><div id="anb"><div class="tr"><label for="tm">Think time</label><input type="range" id="tm" min="1" max="10" value="5"><b id="tmv">5s</b></div><div id="lines"></div><div id="tgm"></div><div id="lg"></div><div id="sm"></div></div></div><div id="hist"></div>
   <div class="btns"><button class="b po" data-act="menu"><i data-ic="rotate"></i>New</button><button class="b" data-act="flip"><i data-ic="flip"></i>Flip</button><button class="b" data-act="rules"><i data-ic="book"></i>Rules</button><button class="b po" data-act="resign"><i data-ic="flag"></i>Resign</button></div></div>
 </div>
 <div id="modal"><div class="card" id="card"></div></div>
@@ -203,7 +204,7 @@ function qs(b,c,a,be,q){const s=ev(b,c);if(!(++nn&127)&&Date.now()>endT)throw 1;
  const o=c==='w'?'b':'w';for(const m of ord(b,gen(b,c,[]).filter(m=>b[m.t]))){const v=-qs(apply(b,m),o,-be,-a,q-1);if(v>=be)return v;if(v>a)a=v}return a}
 function nega(b,c,d,a,be){if(d<=0)return qs(b,c,a,be,4);if(!(++nn&127)&&Date.now()>endT)throw 1;
  const o=c==='w'?'b':'w',ms=ord(b,gen(b,c,['q','r'],1));if(!ms.length)return 0;let best=-1e9;
- for(const m of ms){const v=-nega(apply(b,m),o,d-1,-be,-a);if(v>best)best=v;if(v>a)a=v;if(a>=be)break}return best}
+ for(let i=0;i<ms.length;i++){const m=ms[i],nb=apply(b,m);let v;if(i>5&&d>2&&!b[m.t]&&!m.sp){v=-nega(nb,o,d-2,-a-1,-a);if(v>a)v=-nega(nb,o,d-1,-be,-a)}else v=-nega(nb,o,d-1,-be,-a);if(v>best)best=v;if(v>a)a=v;if(a>=be)break}return best}
 function engine(b,c,ms,post,pv){endT=Date.now()+ms;nn=0;const o=c==='w'?'b':'w';let o0=ord(b,gen(b,c,['q','r'],1));
  if(!o0.length){post({d:0,lines:[]});post({done:1});return}
  for(let d=1;d<=16;d++){const res=[];let a3=-1e9,pl;
@@ -261,18 +262,27 @@ function setTab(t){stopEng();reviewing=0;if(tab==='play'&&PG)PG.flip=flipV;tab=t
  $('#pcs').innerHTML='';els.clear();build();render();ui();
  if(t==='analysis'){renderGames();rvui();analyze()}
  else if(!G.over&&S.mode==='bot'&&G.turn!==S.me)setTimeout(()=>{if(G===PG&&tab==='play'&&!G.over&&G.turn!==S.me)bot()},500)}
-const wp=s=>1/(1+Math.exp(-s/25));
+const wp=s=>1/(1+Math.exp(-s/25)),PN={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'};
 function minAtt(b,sq,c){let r=1e9;b.forEach((p,i)=>{if(p&&p.c===c&&pm(b,i,1).includes(sq))r=Math.min(r,V[p.t])});return r}
+function gain(b,c){const e=c==='w'?'b':'w';let g0=0,m0=null;for(const m of gen(b,c,[])){const v=b[m.t];if(!v)continue;const nb=apply(b,m),re=minAtt(nb,m.t,e),g=V[v.t]-(re<1e9?V[b[m.f].t]:0);if(g>g0){g0=g;m0=m}}return{g:g0,m:m0}}
 function classify(n){if(n<1)return;const A=G.an[n-1],B=G.an[n],m=G.mvs[n-1];if(!m||!A||!A.lines||!A.lines.length)return;
- const pl=A.pl!==undefined?A.pl:(B&&B.lines&&B.lines.length?-B.lines[0].s:null);if(pl==null)return;
+ const hasB=B&&B.lines&&B.lines.length,pl=A.pl!==undefined?A.pl:(hasB?-B.lines[0].s:null);if(pl==null)return;
  const best=A.lines[0].s,T=A.lines[0],isB=T.f===m.f&&T.t===m.t&&T.sp==m.sp,d=Math.max(0,wp(best)-wp(pl)),loss=Math.max(0,best-pl)/10,pb=G.snaps[n-1].b,ab=G.snaps[n].b,me=(n-1)%2?'b':'w',op=me==='w'?'b':'w',sg=me==='w'?1:-1;
- let sac=false;if(!m.sp&&B&&B.lines&&B.lines.length){const mp=pb[m.f],cv=pb[m.t]?V[pb[m.t].t]:0,ma=minAtt(ab,m.t,op),md=minAtt(ab,m.t,me);sac=V[mp.t]-cv>=20&&ma<1e9&&(md===1e9||ma<V[mp.t])&&B.lines[0].t!==m.t}
+ let sac=false;if(!m.sp&&hasB){const mp=pb[m.f],cv=pb[m.t]?V[pb[m.t].t]:0,ma=minAtt(ab,m.t,op),md=minAtt(ab,m.t,me);sac=V[mp.t]-cv>=20&&ma<1e9&&(md===1e9||ma<V[mp.t])&&B.lines[0].t!==m.t}
  let k;if(sac&&d<.03&&wp(best)<.8&&wp(pl)>.4)k='brilliant';
  else if(isB&&A.lines[1]&&wp(best)-wp(A.lines[1].s)>=.15)k='great';
- else if(isB||d<.005)k='best';else if(d<.03)k='excellent';else if(d<.07)k='good';else if(d<.12)k='inaccuracy';else if(d<.25)k='mistake';else k='blunder';
- const pt=G.tags[n-2];if(pt&&(pt.k==='mistake'||pt.k==='blunder')&&(k==='inaccuracy'||k==='mistake'))k='miss';
- const s=nm(pb,m),bs=nm(pb,T),M={miss:`${s} misses a chance. After the previous slip, ${bs} was far stronger.`,brilliant:`${s} is brilliant! A real sacrifice that still holds up: taking the piece backfires.`,great:`${s} is a great find: the only move that keeps your position strong.`,best:`${s} is the engine's top choice.`,excellent:`${s} is excellent, almost the best.`,good:`${s} is good. The engine slightly prefers ${bs}.`,inaccuracy:`${s} is an inaccuracy. ${bs} was better (${fmt(sg*best)}).`,mistake:`${s} is a mistake, costing ~${loss.toFixed(1)} pawns. Best was ${bs}.`,blunder:`${s} is a blunder, costing ~${loss.toFixed(1)} pawns! Best was ${bs}.`};
- G.tags[n-1]={k,msg:M[k]}}
+ else if(isB)k='best';else if(d<.03)k='excellent';else if(d<.07)k='good';else if(d<.12)k='inaccuracy';else if(d<.25)k='mistake';else k='blunder';
+ /* tactical checks: free captures missed, pieces left hanging */
+ const mc=gain(pb,me);let pg=0;if(!m.sp&&pb[m.t]){const re=minAtt(ab,m.t,op);pg=V[pb[m.t].t]-(re<1e9?V[pb[m.f].t]:0)}
+ const missed=mc.g>=20&&mc.g>pg+10,o1=gain(ab,op),o0=gain(apply(pb,T),op),conf=!hasB||B.lines.some(l=>!l.sp&&ab[l.t]&&V[ab[l.t].t]>=30);
+ const hang=k!=='brilliant'&&!isB&&o1.g>=20&&o1.g-o0.g>=10&&conf;
+ if(hang){const sev=o1.g>=50?'blunder':'mistake';if(['excellent','good','inaccuracy'].includes(k)||(k==='mistake'&&sev==='blunder'))k=sev}
+ if(missed&&d>=.04&&!hang&&!['brilliant','great','best'].includes(k))k='miss';
+ const s=nm(pb,m),bs=nm(pb,T),M={miss:`${s} misses a chance. ${bs} was stronger.`,brilliant:`${s} is brilliant! A real sacrifice that still holds up: taking the piece backfires.`,great:`${s} is a great find: the only move that keeps your position strong.`,best:`${s} is the engine's top choice.`,excellent:`${s} is excellent, almost the best.`,good:`${s} is good. The engine slightly prefers ${bs}.`,inaccuracy:`${s} is an inaccuracy. ${bs} was better (${fmt(sg*best)}).`,mistake:`${s} is a mistake, costing ~${loss.toFixed(1)} pawns. Best was ${bs}.`,blunder:`${s} is a blunder, costing ~${loss.toFixed(1)} pawns! Best was ${bs}.`};
+ let msg=M[k];
+ if(k==='miss'&&mc.m)msg=`${s} misses a free ${PN[pb[mc.m.t].t]} on ${sqn(mc.m.t)}. ${nm(pb,mc.m)} wins material.`;
+ else if(hang&&(k==='mistake'||k==='blunder'))msg=`${s} leaves your ${PN[ab[o1.m.t].t]} hanging on ${sqn(o1.m.t)}. Best was ${bs}.`;
+ G.tags[n-1]={k,msg,acc:Math.max(0,Math.min(100,103.1668*Math.exp(-4.354*d)-3.1669))}}
 function arr(m,col,w,op){const p=i=>{const f=i&7,y=i>>3;return[((flipV?7-f:f)+.5)*100,((flipV?y:7-y)+.5)*100]},[x1,y1]=p(m.f),[x2,y2]=p(m.t),dx=x2-x1,dy=y2-y1,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,hx=x2-ux*24,hy=y2-uy*24,sx=x1+ux*20,sy=y1+uy*20;
  return`<g fill="${col}" stroke="${col}" opacity="${op}"><line x1="${sx}" y1="${sy}" x2="${hx}" y2="${hy}" stroke-width="${w}" stroke-linecap="round"${m.sp?' stroke-dasharray="14 10"':''}/><polygon stroke="none" points="${x2-ux*4},${y2-uy*4} ${hx-uy*(w+9)},${hy+ux*(w+9)} ${hx+uy*(w+9)},${hy-ux*(w+9)}"/></g>`}
 function draw(){const n=VI(),A=G.an[n],ok=tab==='analysis'&&S.eng&&A&&A.lines&&A.lines.length>0,live=G.view==null;
@@ -290,7 +300,10 @@ function anui(){const n=VI(),A=G.an[n];$('#engb').textContent=S.eng?'On':'Off';$
  if(A&&A.lines)h=A.lines.slice(0,3).map((m,i)=>`<div class="ln"><b style="background:${['#7fd13b','#3b9bff','#f0a030'][i]}"></b><span>${fmt(sg*m.s)}</span><span>${nm(b,m)}</span></div>`).join('');
  $('#lines').innerHTML=h||'<div class="ln">Analyzing...</div>';
  $('#dep').textContent=A?`Depth ${A.d||0} · ${A.done?'done':'thinking...'}`:'Waiting...';
- const t=n>0&&G.tags[n-1];$('#tgm').innerHTML=t?`<span class="chip" style="background:${TG[t.k][1]}">${tgx(t.k,18)}</span> ${t.msg}`:'';if(!$('#lg').firstChild)$('#lg').innerHTML=Object.keys(TG).map(k=>`<span class="lc"><i style="background:${TG[k][1]}">${tgx(k,18)}</i>${TG[k][2]}</span>`).join('')}
+ const t=n>0&&G.tags[n-1];$('#tgm').innerHTML=t?`<span class="chip" style="background:${TG[t.k][1]}">${tgx(t.k,18)}</span> ${t.msg}`:'';if(!$('#lg').firstChild)$('#lg').innerHTML=Object.keys(TG).map(k=>`<span class="lc"><i style="background:${TG[k][1]}">${tgx(k,18)}</i>${TG[k][2]}</span>`).join('');
+ const cn={w:{},b:{}},ac={w:[],b:[]};G.tags.forEach((t,i)=>{if(!t)return;const s=i%2?'b':'w';cn[s][t.k]=(cn[s][t.k]||0)+1;ac[s].push(t.acc)});
+ const av=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'-',nz=G.meta||{w:'White',b:'Black'};
+ $('#sm').innerHTML=ac.w.length+ac.b.length?['w','b'].map(s=>`<div><b>${nz[s]}</b>: ${av(ac[s])} accuracy${Object.keys(cn[s]).length?' · '+Object.keys(cn[s]).map(k=>cn[s][k]+' '+TG[k][2].toLowerCase()).join(', '):''}</div>`).join(''):''}
 function refresh(){ui();draw()}
 function goV(v){G.view=v>=G.h.length?null:v;sel=spT=null;render();ui();analyze()}
 document.addEventListener('keydown',e=>{if(!G||$('#modal').classList.contains('show'))return;const n=VI();if(e.key==='ArrowLeft')goV(Math.max(0,n-1));else if(e.key==='ArrowRight')goV(Math.min(G.h.length,n+1))});
